@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Possatto PRO v7.0 - Gestão Completa para Marcenaria</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- ==================== HEADER DO SISTEMA ==================== -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>🏗️ Sistema Possatto PRO v7.0</h1>
+                    <p class="subtitle">Gestão Completa para Marcenaria - Versão Modular</p>
+                </div>
+                <div class="header-right">
+                    <div class="backup-buttons">
+                        <button class="btn-backup" onclick="exportarBackup()" title="Fazer backup dos dados">💾
+                            Backup</button>
+                        <button class="btn-backup" onclick="triggerImportBackup()" title="Restaurar backup">📥
+                            Restaurar</button>
+                    </div>
+                    <div class="status-indicator">
+                        <div class="status-dot" id="statusIndicator"></div>
+                        <span id="statusText">Sistema Online</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <input type="file" id="backupFileInput" class="hidden-file-input" accept=".json" onchange="importarBackup(event)">
+    <!-- ==================== NAVEGAÇÃO ENTRE ABAS ==================== -->
+    <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('empresa')" data-tab="empresa">🏢 Empresa</button>
+        <button class="nav-tab" onclick="switchTab('orcamentos')" data-tab="orcamentos">📋 Orçamentos</button>
+        <button class="nav-tab" onclick="switchTab('projetos')" data-tab="projetos">📁 Projetos</button>
+        <button class="nav-tab" onclick="switchTab('gestao')" data-tab="gestao">💰 Gestão Financeira</button>
+        <button class="nav-tab" onclick="switchTab('fluxocaixa')" data-tab="fluxocaixa">💳 Fluxo de Caixa</button>
+        <button class="nav-tab" onclick="switchTab('folha')" data-tab="folha">👥 Folha de Pagamento</button>
+    </nav>
+    <main class="content">
+        <div class="container">
+            <div id="empresa" class="tab-content active"></div>
+            <div id="orcamentos" class="tab-content"></div>
+            <div id="projetos" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">📁 Gerenciamento de Projetos</h2>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="filtrarProjetos('todos')">📋 Todos</button>
+                            <button class="btn btn-success" onclick="filtrarProjetos('concluidos')">✅
+                                Concluídos</button>
+                            <button class="btn btn-warning" onclick="filtrarProjetos('em-andamento')">🚧 Em
+                                Andamento</button>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalProjetos">0</div>
+                            <div class="stat-label">Total de Projetos</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-value" id="projetosAndamento">0</div>
+                            <div class="stat-label">Em Andamento</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-value" id="projetosConcluidos">0</div>
+                            <div class="stat-label">Concluídos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="valorTotalProjetos">R$ 0.00</div>
+                            <div class="stat-label">Valor Total Acumulado</div>
+                        </div>
+                    </div>
+                    <div id="listaProjetos" class="mt-4">
+                        <div class="empty-state">
+                            <p>Nenhum projeto encontrado.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ==================== ABA 4: GESTÃO FINANCEIRA ==================== -->
+            <div id="gestao" class="tab-content"></div>
+            <div id="fluxocaixa" class="tab-content">
+                <div id="fluxoCaixaContent"></div>
+            </div>
+            <div id="folha" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>👥 Folha de Pagamento</h2>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="abrirModalFuncionario()">➕ Funcionário</button>
+                            <button class="btn btn-success" onclick="fecharFolhaMes()">✅ Fechar Folha do Mês</button>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalFuncionarios">0</div>
+                            <div class="stat-label">N° Funcionários</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalSalarios">R$ 0.00</div>
+                            <div class="stat-label">Total Salários</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalEncargos">R$ 0.00</div>
+                            <div class="stat-label">Total Encargos</div>
+                        </div>
+                        <div class="stat-card danger">
+                            <div class="stat-value" id="custoTotalFolha">R$ 0.00</div>
+                            <div class="stat-label">Custo Total da Folha</div>
+                        </div>
+                    </div>
+                    <div id="folhaContent" class="mt-4">
+                        <h4>👥 Funcionários</h4>
+                        <table class="table" id="tabelaFuncionarios">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Cargo</th>
+                                    <th>Salário Bruto</th>
+                                    <th>INSS</th>
+                                    <th>Benefícios</th>
+                                    <th>Custo Total</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">Nenhum funcionário cadastrado</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="mt-4">
+                            <h4>📊 Distribuição de Custos por Funcionário</h4>
+                            <div class="chart-container">
+                                <canvas id="graficoFolha"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MODAIS ==================== -->
+        <div id="modalBaseMateriais" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">📦 Base de Materiais</h3>
+                    <button class="close-btn" onclick="fecharModal('modalBaseMateriais')">&times;</button>
+                </div>
+                <div id="baseMaterialContent"></div>
+            </div>
+        </div>
+        <div id="modalGenerico" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="modalGenericoTitle">Modal</h3>
+                    <button class="close-btn" onclick="fecharModal('modalGenerico')">&times;</button>
+                </div>
+                <div class="modal-body" id="modalGenericoBody"></div>
+            </div>
+        </div>
+        <div id="modalProjeto" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">📁 Detalhes do Projeto</h3>
+                    <button class="close-btn" onclick="fecharModal('modalProjeto')">&times;</button>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <p><strong>Cliente:</strong> </p>
+                        <p><strong>Orçamento:</strong> </p>
+                        <p><strong>Tipo:</strong> </p>
+                        <p><strong>Arquiteto:</strong> </p>
+                        <p><strong>Endereço:</strong> </p>
+                        <p><strong>Prazo:</strong> </p>
+                        <p><strong>Início:</strong> </p>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>💰 Dados da Negociação</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Valor Total</label>
+                                <input type="text" class="form-control" value="R$ $" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Valor Pago</label>
+                                <input type="number" class="form-control" id="valorPagoProjeto" value="" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Forma de Pagamento</label>
+                                <input type="text" class="form-control" id="formaPagamentoProjeto" value="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>📋 Etapas de Execução</h5>
+                        <small class="text-muted">Clique para alterar: Cinza → Laranja → Verde</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="etapas-grid"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observações</label>
+                    <textarea class="form-control" id="observacoesProjeto" rows="3"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="">💾 Salvar</button>
+                    <button class="btn btn-info" onclick="">📋 Duplicar</button>
+                    <button class="btn btn-danger" onclick="">❌ Cancelar Projeto</button>
+                    <button class="btn btn-secondary" onclick="">Fechar</button>
+                </div>
+            </div>
+        </div>
+        <div id="alertFlutuante" class="alert-flutuante" style="display: none;"></div>
+    </main>
+
+    <!-- ==================== CARREGAMENTO DE SCRIPTS (ORDEM CRÍTICA - NÃO ALTERAR) ==================== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="utils.js"></script>
+    <script src="abaEmpresa.js"></script>
+    <script src="abaOrcamentos.js"></script>
+    <script src="abaProjetos.js"></script>
+    <script src="abaGestao.js"></script>
+    <script src="abaFluxo.js"></script>
+    <script src="abaFolha.js"></script>
+    <script src="gerarPDF.js"></script>
+    <script src="validador.js"></script>
+    <script src="testarModuloGerarPDF.js"></script>
+
+    <!-- ==================== SCRIPT DE INICIALIZAÇÃO MODULAR V7.0 ==================== -->
+    <script>
+        // ==================== INICIALIZAÇÃO PRINCIPAL ====================
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('🚀 Inicializando Sistema Possatto PRO v7.0...');
+
+            try {
+                // Inicializar sistema base
+                inicializarSistema();
+
+                // Registrar mudança de abas para inicialização lazy
+                registrarMudancasAba();
+
+                // Carregar aba inicial (Empresa)
+                switchTab('empresa');
+
+                // Verificar integridade do sistema
+                if (window.utils && typeof window.utils.verificarCarregamentoCompleto === 'function') {
+                    window.utils.verificarCarregamentoCompleto();
+                }
+
+                atualizarStatusSistema('Sistema Possatto PRO v7.0 carregado com sucesso', 'success');
+            } catch (error) {
+                console.error('❌ Erro na inicialização:', error);
+                atualizarStatusSistema('Erro na inicialização', 'error');
+            }
+        });
+
+        // ==================== CONTROLE DE NAVEGAÇÃO ====================
+        let currentTab = 'empresa';
+
+        /**
+         * Alterna entre as abas do sistema
+         * @param {string} tabId - ID da aba a ser ativada
+         */
+        function switchTab(tabId) {
+            console.log(`📂 Alternando para aba: ${tabId}`);
+
+            // Remover classe ativa de todas as abas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Ativar aba selecionada
+            const targetTab = document.getElementById(tabId);
+            const targetNavTab = document.querySelector(`[data-tab="${tabId}"]`);
+
+            if (targetTab) targetTab.classList.add('active');
+            if (targetNavTab) targetNavTab.classList.add('active');
+
+            currentTab = tabId;
+
+            // Inicializar módulo da aba se necessário
+            inicializarModuloAba(tabId);
+        }
+
+        /**
+         * Registra os event listeners para mudança de abas
+         */
+        function registrarMudancasAba() {
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function () {
+                    const tabId = this.getAttribute('data-tab');
+                    // Pequeno delay para garantir que o DOM está pronto
+                    setTimeout(() => inicializarModuloAba(tabId), 100);
+                });
+            });
+        }
+
+        /**
+         * Inicializa o módulo específico de cada aba
+         * @param {string} tabId - ID da aba a ser inicializada
+         */
+        function inicializarModuloAba(tabId) {
+            console.log(`📂 Carregando aba: ${tabId}`);
+
+            try {
+                switch (tabId) {
+                    case 'empresa':
+                        // Múltiplas tentativas de inicialização para compatibilidade
+                        if (window.abaEmpresa?.inicializar) {
+                            window.abaEmpresa.inicializar();
+                        } else if (typeof inicializarAbaEmpresa === 'function') {
+                            inicializarAbaEmpresa();
+                        } else if (typeof renderizarAbaEmpresa === 'function') {
+                            renderizarAbaEmpresa();
+                        }
+                        break;
+
+                    case 'orcamentos':
+                        if (window.abaOrcamentosModule?.inicializar) {
+                            window.abaOrcamentosModule.inicializar();
+                        } else if (typeof inicializarAbaOrcamentos === 'function') {
+                            inicializarAbaOrcamentos();
+                        } else if (typeof renderizarTela === 'function') {
+                            renderizarTela();
+                        }
+                        break;
+
+                    case 'projetos':
+                        if (typeof inicializarAbaProjetos === 'function') {
+                            inicializarAbaProjetos();
+                        } else if (window.abaProjetos?.inicializar) {
+                            window.abaProjetos.inicializar();
+                        }
+                        break;
+
+                    case 'gestao':
+                        if (window.abaGestaoModule?.inicializar) {
+                            window.abaGestaoModule.inicializar();
+                        } else if (window.abaGestao?.inicializar) {
+                            window.abaGestao.inicializar();
+                        } else if (typeof renderizarGestaoCompleto === 'function') {
+                            renderizarGestaoCompleto();
+                        }
+                        break;
+
+                    case 'fluxocaixa':
+                        if (window.abaFluxo?.inicializar) {
+                            window.abaFluxo.inicializar();
+                        } else if (typeof inicializarAbaFluxo === 'function') {
+                            inicializarAbaFluxo();
+                        }
+                        break;
+
+                    case 'folha':
+                        if (window.abaFolha?.inicializar) {
+                            window.abaFolha.inicializar();
+                        } else if (typeof inicializarAbaFolha === 'function') {
+                            inicializarAbaFolha();
+                        } else {
+                            console.log('⚠️ Módulo Folha não implementado - usando placeholder');
+                            // Placeholder funcional mínimo
+                        }
+                        break;
+                }
+            } catch (error) {
+                console.error(`❌ Erro ao inicializar módulo ${tabId}:`, error);
+            }
+        }
+
+        // ==================== SISTEMA BASE ====================
+
+        /**
+         * Inicializa o sistema base e configurações globais
+         */
+        function inicializarSistema() {
+            console.log('⚙️ Configurando sistema base...');
+
+            // Carregar dados globais se disponível
+            if (typeof obterDados === 'function') {
+                obterDados();
+            }
+
+            // Configurar listeners globais
+            configurarEventosGlobais();
+        }
+
+        /**
+         * Configura os event listeners globais do sistema
+         */
+        function configurarEventosGlobais() {
+            // Listener para detectar mudanças no localStorage
+            window.addEventListener('storage', function (e) {
+                if (e.key && e.key.startsWith('possatto_')) {
+                    console.log('💾 Dados atualizados:', e.key);
+                }
+            });
+
+            // Listener para beforeunload (aviso antes de sair)
+            window.addEventListener('beforeunload', function (e) {
+                // Salvar dados pendentes se houver
+                if (typeof salvarDados === 'function') {
+                    salvarDados();
+                }
+            });
+        }
+
+        // ==================== FUNÇÕES UTILITÁRIAS ====================
+
+        /**
+         * Atualiza o indicador de status do sistema
+         * @param {string} mensagem - Mensagem a ser exibida
+         * @param {string} tipo - Tipo do status (success, warning, error)
+         */
+        function atualizarStatusSistema(mensagem, tipo) {
+            const statusText = document.getElementById('statusText');
+            const statusIndicator = document.getElementById('statusIndicator');
+
+            if (statusText) {
+                statusText.textContent = mensagem;
+            }
+
+            if (statusIndicator) {
+                statusIndicator.className = 'status-dot';
+                if (tipo === 'error') {
+                    statusIndicator.style.backgroundColor = '#e74c3c';
+                } else if (tipo === 'warning') {
+                    statusIndicator.style.backgroundColor = '#f39c12';
+                } else {
+                    statusIndicator.style.backgroundColor = '#27ae60';
+                }
+            }
+        }
+
+        // ==================== FUNÇÕES STUBS PARA COMPATIBILIDADE ====================
+        // Estas funções serão implementadas pelos módulos específicos
+
+        function obterDados() {
+            console.log('📋 Carregando dados do sistema...');
+        }
+
+        function salvarDados() {
+            console.log('💾 Salvando dados do sistema...');
+        }
+
+        function exportarBackup() {
+            if (window.utils && typeof window.utils.exportarBackup === 'function') {
+                window.utils.exportarBackup();
+            } else {
+                console.log('⚠️ Função exportarBackup será implementada por utils.js');
+            }
+        }
+
+        function triggerImportBackup() {
+            const input = document.getElementById('backupFileInput');
+            if (input) {
+                input.click();
+            }
+        }
+
+        function importarBackup(event) {
+            if (window.utils && typeof window.utils.importarBackup === 'function') {
+                window.utils.importarBackup(event);
+            } else {
+                console.log('⚠️ Função importarBackup será implementada por utils.js');
+            }
+        }
+
+        // ==================== FUNÇÕES DA ABA EMPRESA (STUBS) ====================
+        function salvarDadosEmpresa() {
+            if (window.abaEmpresa && typeof window.abaEmpresa.salvarDadosEmpresa === 'function') {
+                window.abaEmpresa.salvarDadosEmpresa();
+            } else {
+                console.log('💾 Salvando dados da empresa...');
+                mostrarAlerta('Dados salvos com sucesso!', 'success');
+            }
+        }
+
+        function editarDadosEmpresa() {
+            if (window.abaEmpresa && typeof window.abaEmpresa.editarDadosEmpresa === 'function') {
+                window.abaEmpresa.editarDadosEmpresa();
+            } else {
+                console.log('✏️ Editando dados da empresa...');
+            }
+        }
+
+        function limparDadosEmpresa() {
+            if (window.abaEmpresa && typeof window.abaEmpresa.limparDadosEmpresa === 'function') {
+                window.abaEmpresa.limparDadosEmpresa();
+            } else {
+                if (confirm('Tem certeza que deseja limpar todos os dados?')) {
+                    console.log('🗑️ Limpando dados da empresa...');
+                    mostrarAlerta('Dados removidos!', 'warning');
+                }
+            }
+        }
+
+        function previewLogo(event) {
+            if (window.abaEmpresa && typeof window.abaEmpresa.previewLogo === 'function') {
+                window.abaEmpresa.previewLogo(event);
+            } else {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const preview = document.getElementById('logoPreview');
+                        if (preview) {
+                            preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px;">`;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        // ==================== FUNÇÕES DA ABA ORÇAMENTOS (STUBS) ====================
+        function salvarOrcamento() {
+            console.log('💾 Salvando orçamento...');
+            mostrarAlerta('Orçamento salvo com sucesso!', 'success');
+        }
+
+        function duplicarOrcamento() {
+            console.log('📋 Duplicando orçamento...');
+        }
+
+        function gerarPDFOrcamento() {
+            console.log('📄 Gerando PDF do orçamento...');
+        }
+
+        function gerarContrato() {
+            console.log('📑 Gerando contrato...');
+        }
+
+        function adicionarAmbiente() {
+            console.log('➕ Adicionando ambiente...');
+        }
+
+        function abrirBaseMateriais() {
+            abrirModal('modalBaseMateriais');
+        }
+
+        function calcularPrecoVenda() {
+            console.log('💰 Calculando preço de venda...');
+        }
+
+        function editarFormacaoPreco() {
+            console.log('✏️ Editando formação de preço...');
+        }
+
+        function calcularOrcamento() {
+            console.log('📊 Calculando orçamento...');
+            const simulacao = document.getElementById('simulacaoPagamento');
+            if (simulacao) {
+                simulacao.style.display = 'block';
+            }
+        }
+
+        function atualizarSimulacao() {
+            console.log('💳 Atualizando simulação de pagamento...');
+        }
+
+        // ==================== FUNÇÕES DA ABA PROJETOS (STUBS) ====================
+        function filtrarProjetos(filtro) {
+            console.log(`📁 Filtrando projetos: ${filtro}`);
+            mostrarAlerta(`Exibindo projetos: ${filtro}`, 'info');
+        }
+
+        function inicializarAbaProjetos() {
+            if (window.abaProjetos && typeof window.abaProjetos.inicializar === 'function') {
+                window.abaProjetos.inicializar();
+            } else {
+                console.log('📁 Inicializando aba de projetos...');
+                // Atualizar indicadores
+                document.getElementById('totalProjetos').textContent = '0';
+                document.getElementById('projetosAndamento').textContent = '0';
+                document.getElementById('projetosConcluidos').textContent = '0';
+                document.getElementById('valorTotalProjetos').textContent = 'R$ 0,00';
+            }
+        }
+
+        // ==================== FUNÇÕES DA ABA GESTÃO (STUBS) ====================
+        function abrirModalDespesa() {
+            console.log('➕ Abrindo modal de despesa...');
+            abrirModal('modalGenerico');
+        }
+
+        function abrirModalReceita() {
+            console.log('💰 Abrindo modal de receita...');
+            abrirModal('modalGenerico');
+        }
+
+        function abrirModalAnalise() {
+            console.log('📊 Abrindo modal de análise...');
+            abrirModal('modalGenerico');
+        }
+
+        // ==================== FUNÇÕES DA ABA FLUXO (STUBS) ====================
+        function abrirModalEntrada() {
+            console.log('⬆️ Abrindo modal de entrada...');
+            abrirModal('modalGenerico');
+        }
+
+        function abrirModalSaida() {
+            console.log('⬇️ Abrindo modal de saída...');
+            abrirModal('modalGenerico');
+        }
+
+        function abrirModalLancamentos() {
+            console.log('📝 Abrindo modal de lançamentos...');
+            abrirModal('modalGenerico');
+        }
+
+        function importarDadosFluxo() {
+            console.log('📊 Importando dados do fluxo...');
+        }
+
+        // ==================== FUNÇÕES DA ABA FOLHA (STUBS) ====================
+        function abrirModalFuncionario() {
+            console.log('➕ Abrindo modal de funcionário...');
+            abrirModal('modalGenerico');
+        }
+
+        function fecharFolhaMes() {
+            console.log('✅ Fechando folha do mês...');
+            mostrarAlerta('Folha do mês fechada!', 'success');
+        }
+
+        // ==================== FUNÇÃO DE ALERTA VISUAL ====================
+        function mostrarAlerta(mensagem, tipo = 'info') {
+            const alertDiv = document.getElementById('alertFlutuante');
+            if (alertDiv) {
+                alertDiv.textContent = mensagem;
+                alertDiv.className = `alert-flutuante ${tipo}`;
+                alertDiv.style.display = 'block';
+
+                // Auto-ocultar após 3 segundos
+                setTimeout(() => {
+                    alertDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // ==================== COMPATIBILIDADE MODAL ====================
+
+        /**
+         * Abre um modal
+         * @param {string} modalId - ID do modal a ser aberto
+         */
+        function abrirModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                modal.style.display = 'flex';
+            }
+        }
+
+        /**
+         * Fecha um modal
+         * @param {string} modalId - ID do modal a ser fechado
+         */
+        function fecharModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
+        }
+
+        // ==================== INICIALIZAÇÃO DAS ABAS ESPECÍFICAS ====================
+
+        function inicializarAbaEmpresa() {
+            if (window.abaEmpresa?.inicializar) {
+                window.abaEmpresa.inicializar();
+            } else if (typeof renderizarAbaEmpresa === 'function') {
+                renderizarAbaEmpresa();
+            } else {
+                console.log('📋 Carregando dados da empresa...');
+            }
+        }
+
+        function inicializarAbaOrcamentos() {
+            if (window.abaOrcamentosModule?.inicializar) {
+                window.abaOrcamentosModule.inicializar();
+            } else if (typeof renderizarTela === 'function') {
+                renderizarTela();
+            } else {
+                console.log('📋 Carregando orçamentos...');
+            }
+        }
+
+        function inicializarAbaGestao() {
+            if (window.abaGestaoModule?.inicializar) {
+                window.abaGestaoModule.inicializar();
+            } else if (window.abaGestao?.inicializar) {
+                window.abaGestao.inicializar();
+            } else if (typeof renderizarGestaoCompleto === 'function') {
+                renderizarGestaoCompleto();
+            } else {
+                console.log('💰 Carregando gestão financeira...');
+            }
+        }
+
+        function inicializarAbaFluxo() {
+            if (window.abaFluxo?.inicializar) {
+                window.abaFluxo.inicializar();
+            } else {
+                console.log('💳 Carregando fluxo de caixa...');
+            }
+        }
+
+        function inicializarAbaFolha() {
+            if (window.abaFolha?.inicializar) {
+                window.abaFolha.inicializar();
+            } else {
+                console.log('👥 Carregando folha de pagamento...');
+            }
+        }
+
+        // ==================== LOG DE INICIALIZAÇÃO ====================
+        console.log('✅ Sistema Possatto PRO v7.0 - Index.html carregado');
+        console.log('📅 Data:', new Date().toLocaleDateString('pt-BR'));
+
+    </script>
+</body>
+
+</html>
